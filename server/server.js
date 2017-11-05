@@ -12,11 +12,11 @@ app.use(bodyParser.json());
 
 app.post('/todos', (req, res) => {
     const todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
     });
 
     todo.save().then(doc => {
-        res.send(doc)
+        res.send(doc);
     }, e => {
         res.status(400).send(e);
     });
@@ -25,3 +25,5 @@ app.post('/todos', (req, res) => {
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
 });
+
+module.exports = { app };
