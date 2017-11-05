@@ -90,7 +90,6 @@ app.patch('/todos/:id', (req, res) => {
 
         res.send({todo});
     }).catch(e => {
-        console.log('Err', e);
         res.status(400).send(e);
     })
 });

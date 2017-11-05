@@ -1,13 +1,14 @@
+const _ = require('lodash');
 const expect = require('expect');
 const request = require('supertest');
-const {ObjectId} = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 const { app } = require('../server');
 const { Todo } = require('../models/todo');
 
 const todos = [
     { _id: new ObjectId(), text: 'First test todo' },
-    { _id: new ObjectId(), text: 'Second test todo' },
+    { _id: new ObjectId(), text: 'Second test todo', completed: true, completedAt: 123 },
 ];
 
 beforeEach((done) => {
@@ -90,12 +91,12 @@ describe('GET /todos/:id', () => {
             .end(done);
     });
 
-    it ('should return 404 if id not valid', (done) => {
+    it('should return 404 if id not valid', (done) => {
         request(app)
             .get('/todos/123')
             .expect(404)
             .end(done);
-    })
+    });
 });
 
 describe('DELETE /todos/:id', () => {
@@ -116,7 +117,7 @@ describe('DELETE /todos/:id', () => {
                 Todo.findById(hexId).then(todo => {
                     expect(todo).toBe(null);
                     done();
-                })
+                });
             });
     });
 
@@ -129,10 +130,42 @@ describe('DELETE /todos/:id', () => {
             .end(done);
     });
 
-    it ('should return 404 if id not valid', (done) => {
+    it('should return 404 if id not valid', (done) => {
         request(app)
             .delete('/todos/123')
             .expect(404)
+            .end(done);
+    });
+});
+
+describe('DELETE /todos/:id', () => {
+    it('should update the todo', (done) => {
+        const text = 'Update from test';
+        const todo = {...todos[0], text, completed: true};
+
+        request(app)
+            .patch(`/todos/${todo._id}`)
+            .send({...todo})
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+                expect(typeof res.body.todo.completedAt).toBe('number');
+                expect(res.body.todo.completed).toBe(true);
+            })
+            .end(done);
+    })
+
+    it('should clear completedAt when the todo is not completed', (done) => {
+        const todo = {...todos[1], completed: false};
+
+        request(app)
+            .patch(`/todos/${todo._id}`)
+            .send({...todo})
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.completedAt).toBe(null);
+                expect(res.body.todo.completed).toBe(false);
+            })
             .end(done);
     })
 });
