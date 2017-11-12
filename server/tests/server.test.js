@@ -195,7 +195,7 @@ describe('POST /users', () => {
 
         request(app)
             .post('/users')
-            .send({email, password})
+            .send({ email, password })
             .expect(200)
             .expect(res => {
                 // For some reason toExist() method is not working as expected
@@ -203,16 +203,16 @@ describe('POST /users', () => {
                 expect(typeof res.body._id).toBe('string');
                 expect(res.body.email).toBe(email);
             }).end(err => {
-                if (err) {
-                    return done(err);
-                }
+            if (err) {
+                return done(err);
+            }
 
-                User.findOne({email}).then(user => {
-                    expect(typeof user).toBe('object');
-                    // toNotBe doesn't work as expected
-                    // expect(user.password).toNotBe(password);
-                    done();
-                })
+            User.findOne({ email }).then(user => {
+                expect(typeof user).toBe('object');
+                // toNotBe doesn't work as expected
+                // expect(user.password).toNotBe(password);
+                done();
+            }).catch(e => done(e));
         });
     });
 
@@ -221,7 +221,7 @@ describe('POST /users', () => {
             .post('/users')
             .send({
                 email: 'and',
-                password: '123'
+                password: '123',
             })
             .expect(400)
             .end(done);
@@ -232,9 +232,37 @@ describe('POST /users', () => {
             .post('/users')
             .send({
                 email: users[0].email,
-                password: '123456'
+                password: '123456',
             })
             .expect(400)
             .end(done);
+    });
+});
+
+describe('POST /users/login', () => {
+    it('should login user and return auth token', (done) => {
+        request(app)
+            .post('/users/login')
+            .send({
+                email: users[1].email,
+                password: users[1].password,
+            })
+            .expect(200)
+            .expect(res => {
+                expect(typeof res.headers['x-auth']).toBe('string');
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[1]._id).then(user => {
+                    expect(users.tokens[0]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth'],
+                    });
+                    done();
+                }).catch(e => done(e));
+            });
     });
 });
